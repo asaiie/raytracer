@@ -1,0 +1,3 @@
+/Users/amitsai/Projects/raytracer/build/CMakeFiles/raytracer.dir
+/Users/amitsai/Projects/raytracer/build/CMakeFiles/edit_cache.dir
+/Users/amitsai/Projects/raytracer/build/CMakeFiles/rebuild_cache.dir
