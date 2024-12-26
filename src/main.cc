@@ -17,7 +17,7 @@ int main() {
     for (int j = 0; j < image_height; j++) {
         std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
         for (int i = 0; i < image_width; i++) {
-            color pixel_color = color(0, double(i)/(image_width - 1), double(j)/(image_height - 1));
+            auto pixel_color = color(0, double(i)/(image_width - 1), double(j)/(image_height - 1));
             write_color(std::cout, pixel_color);
         }
     }
