@@ -115,6 +115,20 @@ impl Mul<Vec3> for f64 { // f64 * vec3
     }
 }
 
+impl Mul<i32> for Vec3 { // vec3 * i32
+    type Output = Vec3;
+    fn mul(self, t: i32) -> Vec3 {
+        self * (t as f64)
+    }
+}
+
+impl Mul<Vec3> for i32 { // i32 * vec3
+    type Output = Vec3;
+    fn mul(self, v: Vec3) -> Vec3 {
+        (self as f64) * v
+    }
+}
+
 impl MulAssign<f64> for Vec3 { // vec3 *= f64
     fn mul_assign(&mut self, t: f64) {
         self.e[0] *= t;
@@ -127,6 +141,13 @@ impl Div<f64> for Vec3 { // vec3 / f64
     type Output = Vec3;
     fn div(self, t: f64) -> Vec3 {
         (1.0 / t) * self
+    }
+}
+
+impl Div<i32> for Vec3 { // vec3 / i32
+    type Output = Vec3;
+    fn div(self, t: i32) -> Vec3 {
+        self / (t as f64)
     }
 }
 
