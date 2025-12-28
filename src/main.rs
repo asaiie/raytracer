@@ -1,6 +1,7 @@
 mod color;
 mod hittable;
 mod hittable_list;
+mod interval;
 mod ray;
 mod sphere;
 mod utils;
@@ -17,10 +18,11 @@ use std::io::{BufWriter, Write};
 
 use crate::hittable::Hittable;
 use crate::hittable_list::HittableList;
+use crate::interval::Interval;
 use crate::sphere::Sphere;
 
 fn ray_color(r: &Ray, world: &HittableList) -> Color {
-    if let Some(hit_rec) = world.hit(r, 0.0, f64::INFINITY) {
+    if let Some(hit_rec) = world.hit(r, Interval::new(0.0, f64::INFINITY)) {
         return 0.5 * (hit_rec.normal + Color::new(1.0, 1.0, 1.0));
     }
 
