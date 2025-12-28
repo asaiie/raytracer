@@ -1,40 +1,30 @@
-mod vec3;
 mod color;
 mod hittable;
-mod sphere;
+mod hittable_list;
 mod ray;
+mod sphere;
+mod utils;
+mod vec3;
 
-use vec3::Vec3;
-use color::{Color, write_color};
+use color::{write_color, Color};
 use ray::Ray;
+use vec3::Point3;
+use vec3::Vec3;
 
+use std::f64;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
-use crate::vec3::Point3;
+use crate::hittable::Hittable;
+use crate::hittable_list::HittableList;
+use crate::sphere::Sphere;
 
-fn hit_sphere(center: Point3, radius: f64, r: Ray) -> f64 {
-    let oc = center - r.origin();
-    let a = r.direction().length_squared();
-    let h = Vec3::dot(&r.direction(), &oc);
-    let c = oc.length_squared() - radius * radius;
-    let discriminant = h*h - a*c;
-
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (h - discriminant.sqrt()) / a
-    }
-}
-
-fn ray_color(r: &Ray) -> Color {
-    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, *r);
-    if t > 0.0 {
-        let n = Vec3::unit_vector(&(r.at(t) - Vec3::new(0.0, 0.0, -1.0)));
-        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+fn ray_color(r: &Ray, world: &HittableList) -> Color {
+    if let Some(hit_rec) = world.hit(r, 0.0, f64::INFINITY) {
+        return 0.5 * (hit_rec.normal + Color::new(1.0, 1.0, 1.0));
     }
 
-    let unit_direction = Vec3::unit_vector(&r.direction());
+    let unit_direction = r.direction().unit_vector();
     let a = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
 }
@@ -46,6 +36,11 @@ fn main() -> std::io::Result<()> {
 
     let image_height = (image_width as f64 / aspect_ratio) as i32;
     let image_height = image_height.max(1);
+
+    // World
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     // Camera
     let focal_length = 1.0;
@@ -61,8 +56,8 @@ fn main() -> std::io::Result<()> {
     let pixel_delta_u = viewport_u / image_width;
     let pixel_delta_v = viewport_v / image_height;
 
-    let viewport_upper_left: Point3 = camera_center - Vec3::new(0.0, 0.0, focal_length)
-                                         - viewport_u / 2 - viewport_v / 2; // topleft corner of viewport in 3D coord space
+    let viewport_upper_left: Point3 =
+        camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2 - viewport_v / 2; // topleft corner of viewport in 3D coord space
     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
     let file = File::create("image.ppm")?;
@@ -81,7 +76,7 @@ fn main() -> std::io::Result<()> {
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
 
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(&r, &world);
             write_color(&mut out, &pixel_color)?;
         }
     }

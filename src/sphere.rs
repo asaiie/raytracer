@@ -1,7 +1,7 @@
 use crate::{
     hittable::{HitRecord, Hittable},
-    ray::Ray,
-    vec3::Point3,
+    ray::{self, Ray},
+    vec3::{Point3, Vec3},
 };
 
 pub struct Sphere {
@@ -19,7 +19,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r: &Ray, ray_tmin: f64, ray_tmax: f64, rec: &mut HitRecord) -> bool {
+    fn hit(&self, r: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord> {
         let oc = self.center - r.origin();
         let a = r.direction().length_squared();
         let h = r.direction().dot(&oc);
@@ -27,25 +27,23 @@ impl Hittable for Sphere {
 
         let discriminant = h * h - a * c;
         if discriminant < 0.0 {
-            return false;
+            return None;
         }
 
         let sqrtd = discriminant.sqrt();
 
         // find nearest root in range
         let mut root = (h - sqrtd) / a;
-        if root <= ray_tmin || root >= ray_tmax {
+        if root <= ray_tmin || ray_tmax <= root {
             root = (h + sqrtd) / a;
-            if root <= ray_tmin || root >= ray_tmax {
-                return false;
+            if root <= ray_tmin || ray_tmax <= root {
+                return None;
             }
         }
 
-        rec.t = root;
-        rec.p = r.at(rec.t);
-        let outward_normal = (rec.p - self.center) / self.radius;
-        rec.set_face_normal(r, &outward_normal);
+        let hit_point = r.at(root);
+        let outward_normal = (hit_point - self.center) / self.radius;
 
-        true
+        Some(HitRecord::new(hit_point, root, r, &outward_normal))
     }
 }
