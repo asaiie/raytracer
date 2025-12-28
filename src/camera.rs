@@ -10,14 +10,15 @@ use crate::{
     hittable::Hittable,
     hittable_list::HittableList,
     interval::Interval,
-    ray::{self, Ray},
+    ray::Ray,
     vec3::{Point3, Vec3},
 };
 
 pub struct Camera {
-    pub aspect_ratio: f64,
-    pub image_width: i32,
-    pub samples_per_pixel: i32,
+    pub aspect_ratio: f64,      // ratio of image width over height
+    pub image_width: i32,       // rendered image width in pixel count
+    pub samples_per_pixel: i32, // count of random samples for each pixel
+    pub max_depth: i32,         // maximum number of ray bounces into scene
 
     image_height: i32,
     pixel_samples_scale: f64,
@@ -33,6 +34,7 @@ impl Camera {
             aspect_ratio: 1.0,
             image_width: 100,
             samples_per_pixel: 10,
+            max_depth: 10,
             image_height: 0,
             pixel_samples_scale: 0.0,
             center: Point3::default(),
@@ -67,9 +69,15 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
-    fn ray_color(&self, r: &Ray, world: &HittableList) -> Color {
-        if let Some(hit_rec) = world.hit(r, Interval::new(0.0, f64::INFINITY)) {
-            return 0.5 * (hit_rec.normal + Color::new(1.0, 1.0, 1.0));
+    fn ray_color(&self, r: &Ray, depth: i32, world: &HittableList) -> Color {
+        if depth <= 0 {
+            return Color::new(0.0, 0.0, 0.0);
+        }
+
+        if let Some(hit_rec) = world.hit(r, Interval::new(0.001, f64::INFINITY)) {
+            // let direction = Vec3::random_on_hemisphere(&hit_rec.normal);
+            let direction = hit_rec.normal + Vec3::random_unit_vector();
+            return 0.5 * self.ray_color(&Ray::new(hit_rec.p, direction), depth - 1, world);
         }
 
         let unit_direction = r.direction().unit_vector();
@@ -112,7 +120,7 @@ impl Camera {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _sample in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += self.ray_color(&r, world);
+                    pixel_color += self.ray_color(&r, self.max_depth, world);
                 }
                 write_color(&mut out, &(self.pixel_samples_scale * pixel_color))?;
             }
