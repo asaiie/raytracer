@@ -75,9 +75,11 @@ impl Camera {
         }
 
         if let Some(hit_rec) = world.hit(r, Interval::new(0.001, f64::INFINITY)) {
-            // let direction = Vec3::random_on_hemisphere(&hit_rec.normal);
-            let direction = hit_rec.normal + Vec3::random_unit_vector();
-            return 0.5 * self.ray_color(&Ray::new(hit_rec.p, direction), depth - 1, world);
+            if let Some((attenuation, scattered)) = hit_rec.mat.scatter(r, &hit_rec) {
+                return attenuation * self.ray_color(&scattered, depth - 1, world);
+            }
+
+            return Color::new(0.0, 0.0, 0.0);
         }
 
         let unit_direction = r.direction().unit_vector();

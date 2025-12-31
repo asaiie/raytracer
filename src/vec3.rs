@@ -49,6 +49,15 @@ impl Vec3 {
         *self / self.length()
     }
 
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        (self.e[0].abs() < s) && (self.e[0].abs() < s) && (self.e[0].abs() < s)
+    }
+
+    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+        *v - 2.0 * v.dot(n) * *n
+    }
+
     pub fn random(min: f64, max: f64) -> Vec3 {
         let mut rng = rand::thread_rng();
         Vec3::new(
