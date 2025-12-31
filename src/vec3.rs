@@ -58,6 +58,14 @@ impl Vec3 {
         *v - 2.0 * v.dot(n) * *n
     }
 
+    pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta = -uv.dot(n).min(1.0);
+        let r_out_perp = etai_over_etat * (*uv + cos_theta * *n);
+        let r_out_parallel = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * *n;
+
+        r_out_perp + r_out_parallel
+    }
+
     pub fn random(min: f64, max: f64) -> Vec3 {
         let mut rng = rand::thread_rng();
         Vec3::new(
@@ -73,6 +81,16 @@ impl Vec3 {
             let lensq = p.length_squared();
             if 1e-160 < lensq && lensq <= 1.0 {
                 return p / lensq.sqrt();
+            }
+        }
+    }
+
+    pub fn random_in_unit_disk() -> Vec3 {
+        let mut rng = rand::thread_rng();
+        loop {
+            let p = Vec3::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.0);
+            if p.length_squared() < 1.0 {
+                return p;
             }
         }
     }

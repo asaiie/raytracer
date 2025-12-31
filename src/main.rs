@@ -14,7 +14,7 @@ use crate::color::Color;
 use crate::hittable_list::HittableList;
 use crate::material::Material;
 use crate::sphere::Sphere;
-use crate::vec3::Point3;
+use crate::vec3::{Point3, Vec3};
 
 fn main() -> std::io::Result<()> {
     let mut world = HittableList::new();
@@ -25,9 +25,11 @@ fn main() -> std::io::Result<()> {
     let material_center = Material::Lambertian {
         albedo: Color::new(0.1, 0.2, 0.5),
     };
-    let material_left = Material::Metal {
-        albedo: Color::new(0.8, 0.8, 0.8),
-        fuzz: 0.3,
+    let material_left = Material::Dielectric {
+        refraction_index: 1.5,
+    };
+    let material_bubble = Material::Dielectric {
+        refraction_index: 1.0 / 1.5,
     };
     let material_right = Material::Metal {
         albedo: Color::new(0.8, 0.6, 0.2),
@@ -50,6 +52,11 @@ fn main() -> std::io::Result<()> {
         material_left,
     )));
     world.add(Box::new(Sphere::new(
+        Point3::new(-1.0, 0.0, -1.0),
+        0.4,
+        material_bubble,
+    )));
+    world.add(Box::new(Sphere::new(
         Point3::new(1.0, 0.0, -1.0),
         0.5,
         material_right,
@@ -61,6 +68,14 @@ fn main() -> std::io::Result<()> {
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+
+    cam.vfov = 20.0;
+    cam.lookfrom = Point3::new(-2.0, 2.0, 1.0);
+    cam.lookat = Point3::new(0.0, 0.0, -1.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.defocus_angle = 10.0;
+    cam.focus_dist = 3.4;
 
     cam.render(&world)?;
     Ok(())
